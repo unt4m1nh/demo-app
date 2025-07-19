@@ -76,7 +76,7 @@
 }
 
 .service-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -135,6 +135,57 @@
 .service-card.selected .feature-tag {
   background-color: #667eea;
   color: white;
+}
+
+/* Schedule indicator animations */
+@keyframes scheduleIndicatorPulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.schedule-indicator {
+  animation: scheduleIndicatorPulse 2s ease-in-out infinite;
+}
+
+.schedule-indicator:hover {
+  animation-play-state: paused;
+  transform: scale(1.3);
+}
+
+/* Date picker enhancements */
+.date-picker-container {
+  position: relative;
+}
+
+.date-picker-container .schedule-tooltip {
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.date-picker-container:hover .schedule-tooltip {
+  opacity: 1;
 }
 
 /* Desktop layout - services expand width on hover */

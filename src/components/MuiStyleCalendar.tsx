@@ -1,0 +1,348 @@
+import React, { useState, useRef } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import {
+  Box,
+  Paper,
+  Typography,
+  Button,
+  IconButton,
+  Stack,
+} from "@mui/material";
+import dayjs from "dayjs";
+import CustomDropdown, { DropdownOption } from "./CustomDropdown";
+
+interface MuiStyleCalendarProps {
+  width?: string | number;
+  height?: string | number;
+}
+
+const MuiStyleCalendar: React.FC<MuiStyleCalendarProps> = ({
+  width = "100%",
+  height = 500,
+}) => {
+  const calendarRef = useRef<FullCalendar>(null);
+  const [currentDate, setCurrentDate] = useState(dayjs());
+
+  // Generate month options
+  const monthOptions: DropdownOption[] = Array.from(
+    { length: 12 },
+    (_, index) => ({
+      value: index,
+      label: dayjs().month(index).format("MMMM"),
+    })
+  );
+
+  // Generate year options (current year ± 10 years)
+  const currentYear = dayjs().year();
+  const yearOptions: DropdownOption[] = Array.from(
+    { length: 21 },
+    (_, index) => {
+      const year = currentYear - 10 + index;
+      return {
+        value: year,
+        label: year.toString(),
+      };
+    }
+  );
+  const handleDateClick = (arg: any) => {
+    alert(`Selected date: ${dayjs(arg.date).format("MMMM DD, YYYY")}`);
+  };
+
+  const handleMonthChange = (month: string | number) => {
+    const newDate = currentDate.month(Number(month));
+    setCurrentDate(newDate);
+    const calendarApi = calendarRef.current?.getApi();
+    if (calendarApi) {
+      calendarApi.gotoDate(newDate.toDate());
+    }
+  };
+
+  const handleYearChange = (year: string | number) => {
+    const newDate = currentDate.year(Number(year));
+    setCurrentDate(newDate);
+    const calendarApi = calendarRef.current?.getApi();
+    if (calendarApi) {
+      calendarApi.gotoDate(newDate.toDate());
+    }
+  };
+
+  const navigateMonth = (direction: "prev" | "next") => {
+    const newDate =
+      direction === "prev"
+        ? currentDate.subtract(1, "month")
+        : currentDate.add(1, "month");
+    setCurrentDate(newDate);
+    const calendarApi = calendarRef.current?.getApi();
+    if (calendarApi) {
+      calendarApi.gotoDate(newDate.toDate());
+    }
+  };
+  const goToToday = () => {
+    const today = dayjs();
+    setCurrentDate(today);
+    const calendarApi = calendarRef.current?.getApi();
+    if (calendarApi) {
+      calendarApi.today();
+    }
+  };
+
+  return (
+    <Box sx={{ width, p: 2 }}>
+      <Paper
+        elevation={3}
+        sx={{
+          borderRadius: 3,
+          overflow: "hidden",
+          border: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        {/* Custom Header with Dropdowns */}
+        <Box
+          sx={{
+            p: 2,
+            backgroundColor: "#f5f5f5",
+            borderBottom: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          {/* Month/Year Navigation */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 2,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <IconButton
+                size="small"
+                onClick={() => navigateMonth("prev")}
+                sx={{
+                  color: "primary.main",
+                  "&:hover": {
+                    backgroundColor: "primary.light",
+                    color: "white",
+                  },
+                }}
+              >
+                ◀
+              </IconButton>
+
+              <CustomDropdown
+                options={monthOptions}
+                value={currentDate.month()}
+                onChange={handleMonthChange}
+                width="140px"
+                placeholder="Month"
+              />
+
+              <CustomDropdown
+                options={yearOptions}
+                value={currentDate.year()}
+                onChange={handleYearChange}
+                width="100px"
+                placeholder="Year"
+                searchable
+              />
+
+              <IconButton
+                size="small"
+                onClick={() => navigateMonth("next")}
+                sx={{
+                  color: "primary.main",
+                  "&:hover": {
+                    backgroundColor: "primary.light",
+                    color: "white",
+                  },
+                }}
+              >
+                ▶
+              </IconButton>
+            </Box>{" "}
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={goToToday}
+                sx={{ fontSize: "0.75rem" }}
+              >
+                Today
+              </Button>
+            </Stack>
+          </Box>
+
+          {/* Current Month/Year Display */}
+          <Typography
+            variant="h6"
+            sx={{
+              textAlign: "center",
+              color: "text.primary",
+              fontWeight: 600,
+            }}
+          >
+            {currentDate.format("MMMM YYYY")}
+          </Typography>
+        </Box>{" "}
+        {/* MUI-Style Calendar */}
+        <Box
+          sx={{
+            height,
+            "& .fc": {
+              fontFamily: "inherit",
+              height: "100%",
+            },
+            // Hide default FullCalendar header
+            "& .fc-header-toolbar": {
+              display: "none",
+            },
+            // Hide all events to show only day numbers
+            "& .fc-event": {
+              display: "none !important",
+            },
+            "& .fc-daygrid-event": {
+              display: "none !important",
+            },
+            // Grid structure
+            "& .fc-scrollgrid": {
+              border: "none",
+              height: "100%",
+            },
+            "& .fc-scrollgrid-sync-table": {
+              height: "100%",
+            },
+            // Week header styling (Sun, Mon, etc.)
+            "& .fc-col-header": {
+              backgroundColor: "#fafafa",
+              borderBottom: "1px solid #e0e0e0",
+            },
+            "& .fc-col-header-cell": {
+              border: "none",
+              fontWeight: 600,
+              color: "text.secondary",
+              width: "14.28%", // 100% / 7 days
+
+              fontSize: "0.75rem",
+              padding: "12px 8px",
+              textAlign: "center",
+              borderRight: "1px solid #f5f5f5",
+              "&:last-child": {
+                borderRight: "none",
+              },
+            },
+            // Day grid body
+            "& .fc-daygrid-body": {
+              border: "none",
+            },
+            "& .fc-daygrid": {
+              fontFamily: "inherit",
+            },
+            // Individual day cells
+            "& .fc-daygrid-day": {
+              backgroundColor: "white",
+              border: "none",
+              width: "14.28%", // 100% / 7 days
+
+              borderRight: "1px solid #f5f5f5",
+              borderBottom: "1px solid #f5f5f5",
+              "&:last-child": {
+                borderRight: "none",
+              },
+              "&:hover": {
+                backgroundColor: "rgba(25, 118, 210, 0.04)",
+              },
+            },
+            "& .fc-daygrid-day-frame": {
+              padding: "8px",
+              minHeight: "60px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative",
+            },
+            "& .fc-daygrid-day-top": {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              height: "100%",
+            },
+            // Day number styling - circular
+            "& .fc-daygrid-day-number": {
+              color: "text.primary",
+              fontWeight: 500,
+              fontSize: "0.875rem",
+              width: "36px",
+              height: "36px",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "all 0.2s ease-in-out",
+              cursor: "pointer",
+              textDecoration: "none",
+              "&:hover": {
+                backgroundColor: "rgba(25, 118, 210, 0.1)",
+                transform: "scale(1.1)",
+              },
+            },
+            // Today's date styling - highlighted circle
+            "& .fc-day-today": {
+              backgroundColor: "rgba(25, 118, 210, 0.08) !important",
+              "& .fc-daygrid-day-number": {
+                backgroundColor: "#1976d2",
+                color: "white",
+                fontWeight: "bold",
+                boxShadow: "0 2px 8px rgba(25, 118, 210, 0.3)",
+              },
+            },
+            // Other month days - muted
+            "& .fc-day-other": {
+              "& .fc-daygrid-day-number": {
+                color: "text.disabled",
+                opacity: 0.5,
+              },
+            },
+            // Remove default borders and styling
+            "& .fc-theme-standard td": {
+              border: "none",
+            },
+            "& .fc-theme-standard th": {
+              border: "none",
+            },
+            // Ensure proper table layout
+            "& .fc-scrollgrid table": {
+              width: "100%",
+              tableLayout: "fixed",
+            },
+          }}
+        >
+          <FullCalendar
+            ref={calendarRef}
+            plugins={[dayGridPlugin, interactionPlugin]}
+            headerToolbar={false}
+            initialView="dayGridMonth"
+            editable={false}
+            selectable={true}
+            dayMaxEvents={0}
+            events={[]}
+            dateClick={handleDateClick}
+            height={height}
+            displayEventTime={false}
+            fixedWeekCount={false}
+            showNonCurrentDates={true}
+            dayHeaders={true}
+            weekends={true}
+            initialDate={currentDate.toDate()}
+            eventDisplay="none"
+          />
+        </Box>
+      </Paper>
+    </Box>
+  );
+};
+
+export default MuiStyleCalendar;
