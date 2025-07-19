@@ -13,10 +13,29 @@ import {
 import dayjs from "dayjs";
 import CustomDropdown, { DropdownOption } from "./CustomDropdown";
 
+interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end?: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  textColor?: string;
+  description?: string;
+  type?: "meeting" | "deadline" | "event" | "reminder";
+}
+
 interface MuiStyleCalendarProps {
   width?: string | number;
   height?: string | number;
 }
+
+const eventTypeColors = {
+  meeting: { bg: "#1976d2", border: "#1565c0", text: "#fff" },
+  deadline: { bg: "#d32f2f", border: "#c62828", text: "#fff" },
+  event: { bg: "#388e3c", border: "#2e7d32", text: "#fff" },
+  reminder: { bg: "#f57c00", border: "#ef6c00", text: "#fff" },
+};
 
 const MuiStyleCalendar: React.FC<MuiStyleCalendarProps> = ({
   width = "100%",
@@ -24,6 +43,40 @@ const MuiStyleCalendar: React.FC<MuiStyleCalendarProps> = ({
 }) => {
   const calendarRef = useRef<FullCalendar>(null);
   const [currentDate, setCurrentDate] = useState(dayjs());
+  const [events, setEvents] = useState<CalendarEvent[]>([
+    {
+      id: "1",
+      title: "Team Meeting",
+      start: dayjs().format("YYYY-MM-DD"),
+      type: "meeting",
+      description: "Weekly team standup meeting",
+      ...eventTypeColors.meeting,
+    },
+    {
+      id: "2",
+      title: "Project Deadline",
+      start: dayjs().add(2, "day").format("YYYY-MM-DD"),
+      type: "deadline",
+      description: "Final submission for the Q4 project",
+      ...eventTypeColors.deadline,
+    },
+    {
+      id: "3",
+      title: "Company Event",
+      start: dayjs().add(5, "day").format("YYYY-MM-DD"),
+      type: "event",
+      description: "Annual company celebration",
+      ...eventTypeColors.event,
+    },
+    {
+      id: "4",
+      title: "Follow up",
+      start: dayjs().add(10, "day").format("YYYY-MM-DD"),
+      type: "reminder",
+      description: "Check project status",
+      ...eventTypeColors.reminder,
+    },
+  ]);
 
   // Generate month options
   const monthOptions: DropdownOption[] = Array.from(
@@ -86,6 +139,39 @@ const MuiStyleCalendar: React.FC<MuiStyleCalendarProps> = ({
     if (calendarApi) {
       calendarApi.today();
     }
+  };
+
+  const addDemoEvents = () => {
+    const demoEvents: CalendarEvent[] = [
+      {
+        id: `demo-${Date.now()}-1`,
+        title: "Sprint Planning",
+        start: dayjs().add(1, "day").format("YYYY-MM-DD"),
+        type: "meeting",
+        description: "Plan the next development sprint",
+        ...eventTypeColors.meeting,
+      },
+      {
+        id: `demo-${Date.now()}-2`,
+        title: "Review Meeting",
+        start: dayjs().add(3, "day").format("YYYY-MM-DD"),
+        type: "event",
+        description: "Code review session",
+        ...eventTypeColors.event,
+      },
+    ];
+    setEvents([...events, ...demoEvents]);
+  };
+
+  const clearAllEvents = () => {
+    setEvents([]);
+  };
+
+  // Get events for a specific date to show indicators
+  const getEventsForDate = (dateStr: string) => {
+    return events.filter(
+      (event) => dayjs(event.start).format("YYYY-MM-DD") === dateStr
+    );
   };
 
   return (
@@ -167,10 +253,27 @@ const MuiStyleCalendar: React.FC<MuiStyleCalendarProps> = ({
               <Button
                 variant="outlined"
                 size="small"
+                onClick={addDemoEvents}
+                sx={{ fontSize: "0.75rem" }}
+              >
+                ➕ Add Demo
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
                 onClick={goToToday}
                 sx={{ fontSize: "0.75rem" }}
               >
                 Today
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                onClick={clearAllEvents}
+                sx={{ fontSize: "0.75rem" }}
+              >
+                Clear
               </Button>
             </Stack>
           </Box>
@@ -259,16 +362,19 @@ const MuiStyleCalendar: React.FC<MuiStyleCalendarProps> = ({
               padding: "8px",
               minHeight: "60px",
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
               position: "relative",
             },
             "& .fc-daygrid-day-top": {
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
               width: "100%",
               height: "100%",
+              gap: "4px",
             },
             // Day number styling - circular
             "& .fc-daygrid-day-number": {
@@ -288,6 +394,28 @@ const MuiStyleCalendar: React.FC<MuiStyleCalendarProps> = ({
                 backgroundColor: "rgba(25, 118, 210, 0.1)",
                 transform: "scale(1.1)",
               },
+            },
+            // Custom day content container
+            "& .custom-day-content": {
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "4px",
+            },
+            // Event indicators container
+            "& .event-indicators": {
+              display: "flex",
+              gap: "2px",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              maxWidth: "40px",
+            },
+            // Individual event indicator dots
+            "& .event-indicator": {
+              width: "6px",
+              height: "6px",
+              borderRadius: "50%",
+              flexShrink: 0,
             },
             // Today's date styling - highlighted circle
             "& .fc-day-today": {
@@ -320,6 +448,7 @@ const MuiStyleCalendar: React.FC<MuiStyleCalendarProps> = ({
             },
           }}
         >
+          {" "}
           <FullCalendar
             ref={calendarRef}
             plugins={[dayGridPlugin, interactionPlugin]}
@@ -338,7 +467,65 @@ const MuiStyleCalendar: React.FC<MuiStyleCalendarProps> = ({
             weekends={true}
             initialDate={currentDate.toDate()}
             eventDisplay="none"
+            dayCellContent={(arg) => {
+              const dayEvents = getEventsForDate(
+                arg.date.toISOString().split("T")[0]
+              );
+              const dayNumber = arg.dayNumberText;
+
+              return (
+                <div className="custom-day-content">
+                  <div className="fc-daygrid-day-number">{dayNumber}</div>{" "}
+                  {dayEvents.length > 0 && (
+                    <div className="event-indicators">
+                      {dayEvents.slice(0, 3).map((event) => (
+                        <div
+                          key={event.id}
+                          className="event-indicator"
+                          style={{
+                            backgroundColor: event.backgroundColor || "#1976d2",
+                          }}
+                          title={event.title}
+                        />
+                      ))}
+                      {dayEvents.length > 3 && (
+                        <div
+                          className="event-indicator"
+                          style={{
+                            backgroundColor: "#666",
+                            fontSize: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "white",
+                            fontWeight: "bold",
+                          }}
+                          title={`${dayEvents.length - 3} more events`}
+                        >
+                          +
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            }}
           />
+        </Box>
+        {/* Footer */}
+        <Box
+          sx={{
+            p: 1.5,
+            backgroundColor: "#f9f9f9",
+            borderTop: "1px solid",
+            borderColor: "divider",
+            textAlign: "center",
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            {events.length} events • Click on dates to select • Small dots
+            indicate scheduled events
+          </Typography>
         </Box>
       </Paper>
     </Box>
