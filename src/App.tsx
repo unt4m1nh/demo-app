@@ -8,6 +8,7 @@ import StandardMuiDatePicker from './components/StandardMuiDatePicker.tsx';
 import FullCalendarView from './components/FullCalendarView.tsx';
 import MuiStyleCalendar from './components/MuiStyleCalendar.tsx';
 import FilteredChip from './components/FilteredChip.tsx';
+import FullCalendarDatePickerDemo from './components/FullCalendarDatePickerDemo.tsx';
 import './App.css';
 
 interface Service {
@@ -44,6 +45,10 @@ const App: React.FC = () => {
   const [calendarDialogOpen, setCalendarDialogOpen] = useState<boolean>(false);
   const [muiStyleCalendarDialogOpen, setMuiStyleCalendarDialogOpen] =
     useState<boolean>(false);
+  const [
+    fullCalendarDatePickerDialogOpen,
+    setFullCalendarDatePickerDialogOpen,
+  ] = useState<boolean>(false);
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -239,6 +244,13 @@ const App: React.FC = () => {
             onClick={() => setChipDialogOpen(true)}
           >
             FilteredChip Demo
+          </Button>
+          <Button
+            variant='contained'
+            sx={{ bgcolor: '#ff5722' }}
+            onClick={() => setFullCalendarDatePickerDialogOpen(true)}
+          >
+            FullCalendar DatePicker
           </Button>
         </Box>
       </header>
@@ -752,6 +764,23 @@ const App: React.FC = () => {
             </Typography>
           </Box>
         </Box>
+      </CustomDialog>
+      {/* FullCalendar DatePicker Demo Dialog */}
+      <CustomDialog
+        open={fullCalendarDatePickerDialogOpen}
+        onClose={() => setFullCalendarDatePickerDialogOpen(false)}
+        title='FullCalendar DatePicker Demo'
+        maxWidth='lg'
+        actions={
+          <Button
+            onClick={() => setFullCalendarDatePickerDialogOpen(false)}
+            variant='contained'
+          >
+            Close
+          </Button>
+        }
+      >
+        <FullCalendarDatePickerDemo />
       </CustomDialog>
     </div>
   );
